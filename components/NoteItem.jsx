@@ -67,7 +67,7 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 text-black"
             rows="3"
           ></textarea>
           <div className="flex space-x-2">
