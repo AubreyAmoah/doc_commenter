@@ -23,7 +23,7 @@ export default function SearchBar({ placeholder = "Search cases..." }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-4 py-2 focus:outline-none"
+          className="w-full px-4 py-2 focus:outline-none text-black"
         />
         <button type="submit" className="bg-blue-800 text-white px-4 py-2">
           Search
