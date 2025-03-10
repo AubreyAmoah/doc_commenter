@@ -28,10 +28,14 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
           onNoteUpdated({ ...note, content });
         }
       } else {
-        console.error("Failed to update note");
+        // Improved error handling
+        const errorData = await response.json();
+        console.error("Failed to update note:", errorData);
+        alert(`Error updating note: ${errorData.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error updating note:", error);
+      alert(`Network error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }

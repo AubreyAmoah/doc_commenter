@@ -76,6 +76,8 @@ export async function PUT(request, { params }) {
       );
     }
 
+    console.log("Updating note with ID:", noteId); // Add logging
+
     const { content } = await request.json();
 
     if (!content || typeof content !== "string" || !content.trim()) {
@@ -85,12 +87,21 @@ export async function PUT(request, { params }) {
       );
     }
 
-    await updateNote(noteId, content);
-    return NextResponse.json({ success: true });
+    try {
+      await updateNote(noteId, content);
+      console.log("Note updated successfully"); // Add success logging
+      return NextResponse.json({ success: true });
+    } catch (dbError) {
+      console.error("Database error:", dbError); // Log database errors
+      return NextResponse.json(
+        { error: "Database operation failed", details: dbError.message },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Error updating note:", error);
     return NextResponse.json(
-      { error: "Failed to update note" },
+      { error: "Failed to update note", details: error.message },
       { status: 500 }
     );
   }
