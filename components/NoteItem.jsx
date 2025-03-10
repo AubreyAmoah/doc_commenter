@@ -70,6 +70,7 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
       console.log("Deleting note:", { noteId: note._id, caseId: note.caseId });
 
       // Make sure URL is properly formatted
+      // In NoteItem.jsx
       const url = `/api/cases/${encodeURIComponent(
         note.caseId
       )}/notes?id=${encodeURIComponent(note._id)}`;

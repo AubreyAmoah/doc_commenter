@@ -4,7 +4,6 @@ import { authOptions, getSession } from "@/lib/auth";
 import { getCaseNotes, createNote, updateNote, deleteNote } from "@/lib/db";
 import { getServerSession } from "next-auth";
 
-
 export async function GET(request, { params }) {
   try {
     const session = await getSession();
@@ -139,14 +138,26 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    // Extract URL parameters and log them
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     const noteId = searchParams.get("id");
 
-    console.log("API route - DELETE request parameters:", {
-      caseId: params.id,
-      noteId: noteId,
-      url: request.url,
+    // Try to get ID from different places if it's missing
+    if (!noteId) {
+      // Try to get from request body as fallback
+      try {
+        const body = await request.json().catch(() => ({}));
+        noteId = body.id;
+      } catch (e) {
+        console.log("No JSON body in request");
+      }
+    }
+
+    console.log("Note ID from all sources:", {
+      fromURL: url.searchParams.get("id"),
+      fromParams: params,
+      finalNoteId: noteId,
     });
 
     if (!noteId) {
