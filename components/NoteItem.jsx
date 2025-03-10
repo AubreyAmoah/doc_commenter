@@ -14,26 +14,18 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
 
     setIsSubmitting(true);
     try {
-      // Log what we're trying to send
-      console.log("Updating note:", {
-        noteId: note._id,
-        caseId: note.caseId,
-        content: content.substring(0, 30) + (content.length > 30 ? "..." : ""),
-      });
+      console.log("Updating note:", { noteId: note._id, caseId: note.caseId });
 
-      // Make sure URL is properly formatted
-      const url = `/api/cases/${encodeURIComponent(
-        note.caseId
-      )}/notes?id=${encodeURIComponent(note._id)}`;
-      console.log("Request URL:", url);
-
-      const response = await fetch(url, {
-        method: "PUT",
+      // Use the new update endpoint
+      const response = await fetch(`/api/cases/${note.caseId}/notes/update`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({
+          id: note._id,
+          content,
+        }),
       });
 
-      // Log response status
       console.log("Update response status:", response.status);
 
       if (response.ok) {
@@ -42,20 +34,18 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
           onNoteUpdated({ ...note, content });
         }
       } else {
-        // Try to get detailed error information
-        let errorMessage = "Update failed";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || "Unknown error";
-          console.error("Update failed - Server response:", errorData);
-        } catch (e) {
-          console.error("Couldn't parse error response:", e);
-        }
-
-        alert(`Update failed: ${errorMessage} (Status: ${response.status})`);
+        const errorData = await response
+          .json()
+          .catch((e) => ({ error: "Unknown error" }));
+        console.error("Update failed:", errorData);
+        alert(
+          `Update failed: ${errorData.error || "Unknown error"} (Status: ${
+            response.status
+          })`
+        );
       }
     } catch (error) {
-      console.error("Network error during update:", error);
+      console.error("Error updating note:", error);
       alert(`Network error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -67,16 +57,11 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
     if (!confirm("Are you sure you want to delete this note?")) return;
 
     try {
-      console.log("Deleting note:", { noteId: note._id, caseId: note.caseId });
-
-      // Make sure URL is properly formatted
-      // In NoteItem.jsx
-      const url = `/api/cases/${encodeURIComponent(
-        note.caseId
-      )}/notes?id=${encodeURIComponent(note._id)}`;
-      console.log("Request URL:", url);
-
-      const response = await fetch(url, { method: "DELETE" });
+      const response = await fetch(`/api/cases/${note.caseId}/notes/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: note._id }),
+      });
 
       console.log("Delete response status:", response.status);
 
