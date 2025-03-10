@@ -101,36 +101,6 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
     }
   };
 
-  // When fetching notes, check the ID format
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const response = await fetch(`/api/cases/${caseId}/notes`);
-
-        if (response.ok) {
-          const notesData = await response.json();
-
-          // Log the note IDs to check their format
-          console.log(
-            "Notes received:",
-            notesData.map((note) => ({
-              id: note._id,
-              idType: typeof note._id,
-            }))
-          );
-
-          setNotes(notesData);
-        } else {
-          console.error("Failed to fetch notes");
-        }
-      } catch (error) {
-        console.error("Error fetching notes:", error);
-      }
-    };
-
-    fetchNotes();
-  }, [caseId]);
-
   return (
     <div className="bg-white shadow rounded-lg p-4 mb-4">
       {isEditing ? (
