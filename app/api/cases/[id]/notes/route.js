@@ -1,6 +1,6 @@
 // app/api/cases/[id]/notes/route.js
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { authOptions, getSession } from "@/lib/auth";
 import { getCaseNotes, createNote, updateNote, deleteNote } from "@/lib/db";
 import { getServerSession } from "next-auth";
 
