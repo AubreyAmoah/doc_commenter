@@ -1,7 +1,7 @@
 // components/NoteItem.jsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
   const [isEditing, setIsEditing] = useState(false);
