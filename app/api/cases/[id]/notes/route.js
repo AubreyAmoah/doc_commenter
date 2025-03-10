@@ -59,15 +59,24 @@ export async function POST(request, { params }) {
   }
 }
 
+// app/api/cases/[id]/notes/route.js
 export async function PUT(request, { params }) {
   try {
-    const session = await getSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+    // Extract and log all parameters
+    const url = new URL(request.url);
+    const searchParams = url.searchParams;
     const noteId = searchParams.get("id");
+
+    console.log("API route - PUT request parameters:", {
+      caseId: params.id,
+      noteId: noteId,
+      url: request.url,
+    });
 
     if (!noteId) {
       return NextResponse.json(
@@ -76,9 +85,15 @@ export async function PUT(request, { params }) {
       );
     }
 
-    console.log("Updating note with ID:", noteId); // Add logging
-
-    const { content } = await request.json();
+    // Parse JSON body with error handling
+    let content;
+    try {
+      const body = await request.json();
+      content = body.content;
+    } catch (parseError) {
+      console.error("JSON parsing error:", parseError);
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
     if (!content || typeof content !== "string" || !content.trim()) {
       return NextResponse.json(
@@ -88,34 +103,49 @@ export async function PUT(request, { params }) {
     }
 
     try {
-      await updateNote(noteId, content);
-      console.log("Note updated successfully"); // Add success logging
+      const success = await updateNote(noteId, content);
+
+      if (!success) {
+        return NextResponse.json(
+          { error: "Note not found or not updated" },
+          { status: 404 }
+        );
+      }
+
       return NextResponse.json({ success: true });
     } catch (dbError) {
-      console.error("Database error:", dbError); // Log database errors
+      console.error("Database operation failed:", dbError);
       return NextResponse.json(
-        { error: "Database operation failed", details: dbError.message },
+        { error: `Database error: ${dbError.message}` },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error("Error updating note:", error);
+    console.error("General error in PUT handler:", error);
     return NextResponse.json(
-      { error: "Failed to update note", details: error.message },
+      { error: `Server error: ${error.message}` },
       { status: 500 }
     );
   }
 }
 
+// Similarly update the DELETE handler
 export async function DELETE(request, { params }) {
   try {
-    const session = await getSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+    const url = new URL(request.url);
+    const searchParams = url.searchParams;
     const noteId = searchParams.get("id");
+
+    console.log("API route - DELETE request parameters:", {
+      caseId: params.id,
+      noteId: noteId,
+      url: request.url,
+    });
 
     if (!noteId) {
       return NextResponse.json(
@@ -124,12 +154,28 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    await deleteNote(noteId);
-    return NextResponse.json({ success: true });
+    try {
+      const success = await deleteNote(noteId);
+
+      if (!success) {
+        return NextResponse.json(
+          { error: "Note not found or not deleted" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({ success: true });
+    } catch (dbError) {
+      console.error("Database operation failed:", dbError);
+      return NextResponse.json(
+        { error: `Database error: ${dbError.message}` },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error("Error deleting note:", error);
+    console.error("General error in DELETE handler:", error);
     return NextResponse.json(
-      { error: "Failed to delete note" },
+      { error: `Server error: ${error.message}` },
       { status: 500 }
     );
   }

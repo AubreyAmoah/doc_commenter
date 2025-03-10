@@ -8,19 +8,33 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
   const [content, setContent] = useState(note.content);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // In NoteItem.jsx component
   const handleUpdate = async () => {
     if (!content.trim()) return;
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(
-        `/api/cases/${note.caseId}/notes?id=${note._id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content }),
-        }
-      );
+      // Log what we're trying to send
+      console.log("Updating note:", {
+        noteId: note._id,
+        caseId: note.caseId,
+        content: content.substring(0, 30) + (content.length > 30 ? "..." : ""),
+      });
+
+      // Make sure URL is properly formatted
+      const url = `/api/cases/${encodeURIComponent(
+        note.caseId
+      )}/notes?id=${encodeURIComponent(note._id)}`;
+      console.log("Request URL:", url);
+
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+
+      // Log response status
+      console.log("Update response status:", response.status);
 
       if (response.ok) {
         setIsEditing(false);
@@ -28,41 +42,94 @@ export default function NoteItem({ note, onNoteUpdated, onNoteDeleted }) {
           onNoteUpdated({ ...note, content });
         }
       } else {
-        // Improved error handling
-        const errorData = await response.json();
-        console.error("Failed to update note:", errorData);
-        alert(`Error updating note: ${errorData.error || "Unknown error"}`);
+        // Try to get detailed error information
+        let errorMessage = "Update failed";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || "Unknown error";
+          console.error("Update failed - Server response:", errorData);
+        } catch (e) {
+          console.error("Couldn't parse error response:", e);
+        }
+
+        alert(`Update failed: ${errorMessage} (Status: ${response.status})`);
       }
     } catch (error) {
-      console.error("Error updating note:", error);
+      console.error("Network error during update:", error);
       alert(`Network error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Similarly update the handleDelete function
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this note?")) return;
 
     try {
-      const response = await fetch(
-        `/api/cases/${note.caseId}/notes?id=${note._id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      console.log("Deleting note:", { noteId: note._id, caseId: note.caseId });
+
+      // Make sure URL is properly formatted
+      const url = `/api/cases/${encodeURIComponent(
+        note.caseId
+      )}/notes?id=${encodeURIComponent(note._id)}`;
+      console.log("Request URL:", url);
+
+      const response = await fetch(url, { method: "DELETE" });
+
+      console.log("Delete response status:", response.status);
 
       if (response.ok) {
         if (onNoteDeleted) {
           onNoteDeleted(note._id);
         }
       } else {
-        console.error("Failed to delete note");
+        let errorMessage = "Delete failed";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || "Unknown error";
+          console.error("Delete failed - Server response:", errorData);
+        } catch (e) {
+          console.error("Couldn't parse error response:", e);
+        }
+
+        alert(`Delete failed: ${errorMessage} (Status: ${response.status})`);
       }
     } catch (error) {
-      console.error("Error deleting note:", error);
+      console.error("Network error during delete:", error);
+      alert(`Network error: ${error.message}`);
     }
   };
+
+  // When fetching notes, check the ID format
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const response = await fetch(`/api/cases/${caseId}/notes`);
+
+        if (response.ok) {
+          const notesData = await response.json();
+
+          // Log the note IDs to check their format
+          console.log(
+            "Notes received:",
+            notesData.map((note) => ({
+              id: note._id,
+              idType: typeof note._id,
+            }))
+          );
+
+          setNotes(notesData);
+        } else {
+          console.error("Failed to fetch notes");
+        }
+      } catch (error) {
+        console.error("Error fetching notes:", error);
+      }
+    };
+
+    fetchNotes();
+  }, [caseId]);
 
   return (
     <div className="bg-white shadow rounded-lg p-4 mb-4">
